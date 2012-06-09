@@ -7,12 +7,33 @@ class MoviesController < ApplicationController
   end
 
   def index
-    if (params[:sort_by] == "title")
-      @title_header_class = "hilite"
-    elsif (params[:sort_by] == "release_date")
-      @release_date_header_class = "hilite"
+    @all_ratings = Movie.all_ratings
+
+    if params[:ratings]
+      @ratings_hash = params[:ratings]
+      @ratings_array = params[:ratings].keys
+      session[:ratings] = @ratings_hash
+    elsif session[:ratings]
+      flash.keep
+      redirect_to params.merge(:ratings => session[:ratings])
+    else
+      @ratings_hash = {}
+      @ratings_array = @all_ratings
     end
-    @movies = Movie.find(:all, :order =>  params[:sort_by])
+
+    if params[:sort_by]
+      session[:sort_by] = params[:sort_by]
+      if (params[:sort_by] == "title")
+        @title_header_class = "hilite"
+      elsif (params[:sort_by] == "release_date")
+        @release_date_header_class = "hilite"
+      end
+    elsif session[:sort_by] && params[:ratings]
+      flash.keep
+      redirect_to params.merge(:sort_by => session[:sort_by])
+    end
+
+    @movies = Movie.find_all_by_rating(@ratings_array, :order =>  session[:sort_by])
   end
 
   def new
